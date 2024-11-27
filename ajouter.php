@@ -1,3 +1,32 @@
+
+<?php
+include 'db_connect.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Récupérer les données du formulaire
+    $matricule = $_POST['matricule'];
+    $nom = $_POST['nom'];
+    $prenom = $_POST['prenom'];
+    $filiere = $_POST['filiere'];
+    $anneeEtude = $_POST['anneeEtude'];
+    $typeBac = $_POST['typeBac'];
+    $anneeBac = $_POST['anneeBac'];
+
+    // Insertion dans la base de données
+    $sql = "INSERT INTO stagiaires (matStagiaire, nomStagiaire, prenomStagiaire, filiereStagiaire, anneeEtude, typeBac, anneeBac) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $pdo->prepare($sql);
+    if ($stmt->execute([$matricule, $nom, $prenom, $filiere, $anneeEtude, $typeBac, $anneeBac])) {
+        header("Location: ajouter.php?success=1");
+        exit;
+
+    } else {
+        header("Location: ajouter.php?success=0");
+        exit;
+    }
+
+}
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -66,13 +95,40 @@
             background-color: #f9f9f9;
         }
 
+        .message {
+            text-align: center;
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            color: green;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+        }
+
+        .error {
+            color: red;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
     <h1>Ajouter un Stagiaire</h1>
     <div class="form-container">
-        
-        <form >
+        <!-- Affichage du message de confirmation ou d'erreur -->
+        <?php if (isset($_GET['success'])): ?>
+            <?php if ($_GET['success'] == 1): ?>
+                <div class="message success">Stagiaire ajouté avec succès !</div>
+            <?php elseif ($_GET['success'] == 0): ?>
+                <div class="message error">Erreur lors de l'ajout du stagiaire. Veuillez réessayer.</div>
+            <?php endif; ?>
+        <?php endif; ?>
+        <form action="ajouter.php" method="POST">
             <label for="matricule">Matricule :</label>
             <input type="text" id="matricule" name="matricule" placeholder="Exemple : 1001" required>
             <label for="nom">Nom :</label>
@@ -105,7 +161,22 @@
                 </tr>
             </thead>
             <tbody>
-                
+            <?php
+                include 'db_connect.php';
+                $sql = "SELECT * FROM stagiaires";
+                $stmt = $pdo->query($sql);
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    echo "<tr>
+                            <td>{$row['matStagiaire']}</td>
+                            <td>{$row['nomStagiaire']}</td>
+                            <td>{$row['prenomStagiaire']}</td>
+                            <td>{$row['filiereStagiaire']}</td>
+                            <td>{$row['anneeEtude']}</td>
+                            <td>{$row['typeBac']}</td>
+                            <td>{$row['anneeBac']}</td>
+                          </tr>";
+                }
+                ?>
             </tbody>
         </table>
     </div>
