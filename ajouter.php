@@ -12,6 +12,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $typeBac = $_POST['typeBac'];
     $anneeBac = $_POST['anneeBac'];
 
+    // Vérifier si le matricule existe déjà
+    $sql_check = "SELECT COUNT(*) FROM stagiaires WHERE matStagiaire = ?";
+    $stmt_check = $pdo->prepare($sql_check);
+    $stmt_check->execute([$matricule]);
+    $exists = $stmt_check->fetchColumn();
+
+    if ($exists) {
+        // Matricule existe déjà
+        header("Location: ajouter.php?success=0&error=matricule_existe");
+        exit;
+    }
+
     // Insertion dans la base de données
     $sql = "INSERT INTO stagiaires (matStagiaire, nomStagiaire, prenomStagiaire, filiereStagiaire, anneeEtude, typeBac, anneeBac) 
             VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -21,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
 
     } else {
-        header("Location: ajouter.php?success=0");
+        header("Location: ajouter.php?success=0&error=insert_error");
         exit;
     }
 
@@ -125,7 +137,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php if ($_GET['success'] == 1): ?>
                 <div class="message success">Stagiaire ajouté avec succès !</div>
             <?php elseif ($_GET['success'] == 0): ?>
-                <div class="message error">Erreur lors de l'ajout du stagiaire. Veuillez réessayer.</div>
+                <?php if (isset($_GET['error']) && $_GET['error'] == 'matricule_existe'): ?>
+                    <div class="message error">Erreur : Le matricule existe déjà. Veuillez en saisir un autre.</div>
+                <?php else: ?>
+                    <div class="message error">Erreur lors de l'ajout du stagiaire. Veuillez réessayer.</div>
+                <?php endif; ?>
             <?php endif; ?>
         <?php endif; ?>
         <form action="ajouter.php" method="POST">
