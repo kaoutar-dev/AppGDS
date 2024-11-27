@@ -1,3 +1,58 @@
+<?php
+// Inclure le fichier de connexion
+include 'db_connect.php';
+
+// Initialiser les variables pour afficher les stagiaires
+$stagiaires = [];
+
+// Récupérer tous les stagiaires de la base de données
+try {
+    $sql = "SELECT * FROM stagiaires";
+    $stmt = $pdo->query($sql);
+    $stagiaires = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    echo "Erreur : " . $e->getMessage();
+}
+
+// Gérer la modification d'un stagiaire
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $matricule = $_POST['matStagiaire'];
+    $nom = $_POST['nomStagiaire'];
+    $prenom = $_POST['prenomStagiaire'];
+    $filiere = $_POST['filiereStagiaire'];
+    $anneeEtude = $_POST['anneeEtude'];
+    $typeBac = $_POST['typeBac'];
+    $anneeBac = $_POST['anneeBac'];
+
+    try {
+        $sql = "UPDATE stagiaires 
+                SET nomStagiaire = :nom, 
+                    prenomStagiaire = :prenom, 
+                    filiereStagiaire = :filiere, 
+                    anneeEtude = :anneeEtude, 
+                    typeBac = :typeBac, 
+                    anneeBac = :anneeBac 
+                WHERE matStagiaire = :matricule";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':nom' => $nom,
+            ':prenom' => $prenom,
+            ':filiere' => $filiere,
+            ':anneeEtude' => $anneeEtude,
+            ':typeBac' => $typeBac,
+            ':anneeBac' => $anneeBac,
+            ':matricule' => $matricule,
+        ]);
+
+        // Rafraîchir la page pour afficher les modifications
+        header("Location: modifier.php");
+        exit();
+    } catch (PDOException $e) {
+        echo "Erreur lors de la modification : " . $e->getMessage();
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -110,7 +165,26 @@
                 </tr>
             </thead>
             <tbody>
-                
+            <?php if (!empty($stagiaires)): ?>
+                    <?php foreach ($stagiaires as $stagiaire): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($stagiaire['matStagiaire']) ?></td>
+                            <td><?= htmlspecialchars($stagiaire['nomStagiaire']) ?></td>
+                            <td><?= htmlspecialchars($stagiaire['prenomStagiaire']) ?></td>
+                            <td><?= htmlspecialchars($stagiaire['filiereStagiaire']) ?></td>
+                            <td><?= htmlspecialchars($stagiaire['anneeEtude']) ?></td>
+                            <td><?= htmlspecialchars($stagiaire['typeBac']) ?></td>
+                            <td><?= htmlspecialchars($stagiaire['anneeBac']) ?></td>
+                            <td>
+                                <button class="edit-btn" onclick="remplirFormulaire(<?= htmlspecialchars(json_encode($stagiaire)) ?>)">Modifier</button>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="8">Aucun stagiaire trouvé.</td>
+                    </tr>
+                <?php endif; ?>
             </tbody>
         </table>
     </div><br>
@@ -118,7 +192,7 @@
     <!-- Formulaire pour modifier un stagiaire -->
     <div class="form-container">
         <h2>Modifier un Stagiaire</h2>
-        <form >
+        <form method="POST" action="modifier.php">
             <input type="hidden" id="matStagiaire" name="matStagiaire">
 
             <label for="nomStagiaire">Nom :</label>

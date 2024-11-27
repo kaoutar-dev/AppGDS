@@ -94,7 +94,7 @@
     <div class="container">
         <!-- Formulaire pour filtrer les stagiaires -->
         <div class="form-container">
-            <form>
+            <form action="listeEtudiants.php" method="get">
                 <label for="filiere">Filière :</label>
                 <input type="text" id="filiere" name="filiere" placeholder="Exemple : Informatique" required>
 
@@ -119,7 +119,44 @@
                 </tr>
             </thead>
             <tbody>
-                
+            <?php
+                include 'db_connect.php';
+
+                // Initialisation des variables
+                $stagiaires = [];
+                if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['filiere'], $_GET['anneeBac'])) {
+                    $filiere = htmlspecialchars($_GET['filiere']);
+                    $anneeBac = (int)$_GET['anneeBac'];
+
+                    // Requête SQL pour filtrer les stagiaires
+                    $sql = "SELECT matStagiaire, nomStagiaire, prenomStagiaire, filiereStagiaire, anneeEtude, typeBac, anneeBac 
+                            FROM stagiaires 
+                            WHERE filiereStagiaire = :filiere AND anneeBac = :anneeBac";
+
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->bindParam(':filiere', $filiere);
+                    $stmt->bindParam(':anneeBac', $anneeBac);
+                    $stmt->execute();
+                    $stagiaires = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                }
+
+                // Affichage des résultats dans la table
+                if (!empty($stagiaires)) {
+                    foreach ($stagiaires as $stagiaire) {
+                        echo "<tr>
+                                <td>" . htmlspecialchars($stagiaire['matStagiaire']) . "</td>
+                                <td>" . htmlspecialchars($stagiaire['nomStagiaire']) . "</td>
+                                <td>" . htmlspecialchars($stagiaire['prenomStagiaire']) . "</td>
+                                <td>" . htmlspecialchars($stagiaire['filiereStagiaire']) . "</td>
+                                <td>" . htmlspecialchars($stagiaire['anneeEtude']) . "</td>
+                                <td>" . htmlspecialchars($stagiaire['typeBac']) . "</td>
+                                <td>" . htmlspecialchars($stagiaire['anneeBac']) . "</td>
+                              </tr>";
+                    }
+                } else {
+                    echo "<tr><td colspan='7'>Aucun stagiaire trouvé pour ces critères.</td></tr>";
+                }
+                ?>
             </tbody>
         </table>
     </div>
